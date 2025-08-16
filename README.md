@@ -13,7 +13,7 @@
 
 ### 2. 获取 GitHub Copilot API 密钥
 
-1. 访问 [GitHub Copilot](https://github.com/features/copilot)
+1. 访问 [GitHub Settings - Developer settings](https://github.com/settings/tokens) 或 [GitHub Copilot API 管理页面](https://github.com/settings/copilot)
 2. 订阅 GitHub Copilot 服务
 3. 在设置中生成 API 密钥
 
