@@ -53,7 +53,7 @@ services:
       fastgpt-copilot-dev:
         ipv4_address: 172.29.0.4
     ports:
-      - "3000:3000"
+      - "3200:3000"
     environment:
       - DEFAULT_ROOT_PSW=${FASTGPT_ROOT_PASSWORD}
       - OPENAI_BASE_URL=http://172.29.0.5:8888
