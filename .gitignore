@@ -1,8 +1,10 @@
-# 环境变量文件
+# 环境变量和敏感信息
 .env
-.env.local
-.env.production
-.env.development
+.env.*
+config/development.env
+config/production.env
+config/*.env
+!config/*.env.example
 
 # 日志文件
 logs/

@@ -1,0 +1,105 @@
+version: '3.8'
+
+# 开发环境配置 - 便于调试和开发
+networks:
+  fastgpt-copilot-dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.0.0/16
+
+services:
+  # MongoDB数据库 - 开发版
+  mongo:
+    image: mongo:5.0.18
+    container_name: fastgpt-mongo-dev
+    restart: unless-stopped
+    networks:
+      fastgpt-copilot-dev:
+        ipv4_address: 172.29.0.2
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - ./dev-data/mongo:/data/db
+      - ../../scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    command: mongod --wiredTigerCacheSizeGB 1 --auth
+
+  # PostgreSQL数据库 - 开发版
+  pg:
+    image: ankane/pgvector:v0.5.0
+    container_name: fastgpt-pg-dev
+    restart: unless-stopped
+    networks:
+      fastgpt-copilot-dev:
+        ipv4_address: 172.29.0.3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${PG_USERNAME}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+    volumes:
+      - ./dev-data/pg:/var/lib/postgresql/data
+
+  # FastGPT主服务 - 开发版
+  fastgpt:
+    image: ghcr.io/labring/fastgpt:v4.8.1
+    container_name: fastgpt-dev
+    restart: unless-stopped
+    networks:
+      fastgpt-copilot-dev:
+        ipv4_address: 172.29.0.4
+    ports:
+      - "3000:3000"
+    environment:
+      - DEFAULT_ROOT_PSW=${FASTGPT_ROOT_PASSWORD}
+      - OPENAI_BASE_URL=http://172.29.0.5:8888
+      - CHAT_API_KEY=${CHAT_API_KEY}
+      - DB_MAX_LINK=20
+      - TOKEN_KEY=${TOKEN_KEY}
+      - ROOT_KEY=${ROOT_KEY}
+      - FILE_TOKEN_KEY=${FILE_TOKEN_KEY}
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@172.29.0.2:27017/fastgpt?authSource=admin
+      - PG_URL=postgresql://${PG_USERNAME}:${PG_PASSWORD}@172.29.0.3:5432/${PG_DATABASE}
+    depends_on:
+      - mongo
+      - pg
+      - copilot-proxy
+    volumes:
+      - ./dev-data/fastgpt:/app/data
+
+  # GitHub Copilot代理服务 - 开发版
+  copilot-proxy:
+    build:
+      context: ../../services/copilot-proxy
+      dockerfile: Dockerfile
+    container_name: copilot-proxy-dev
+    restart: unless-stopped
+    networks:
+      fastgpt-copilot-dev:
+        ipv4_address: 172.29.0.5
+    ports:
+      - "8888:8888"
+    environment:
+      - PORT=8888
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - NODE_ENV=${NODE_ENV}
+    # 开发环境下挂载源代码，支持热重载
+    volumes:
+      - ../../services/copilot-proxy/src:/app/src
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  dev_mongo_data:
+  dev_pg_data:
+  dev_fastgpt_data:

@@ -9,7 +9,7 @@
   },
   "database": {
     "mongodb": {
-      "uri": "mongodb://root:fastgpt123@mongodb:27017/fastgpt?authSource=admin",
+      "uri": "mongodb://{{MONGO_USERNAME}}:{{MONGO_PASSWORD}}@mongodb:27017/fastgpt?authSource=admin",
       "database": "fastgpt",
       "collections": {
         "users": "users",

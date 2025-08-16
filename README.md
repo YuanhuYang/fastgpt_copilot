@@ -1,192 +1,242 @@
-# FastGPT Docker Compose 部署指南
+# FastGPT Copilot Integration
 
-本项目提供了使用 Docker Compose 快速部署 FastGPT 的完整解决方案，并集成了 GitHub Copilot 的大模型 API。
+一个将 GitHub Copilot 模型集成到 FastGPT 的完整解决方案，通过代理服务提供 OpenAI 兼容的 API 接口。
+
+## 🚀 特性
+
+- **GitHub Copilot 集成**: 将 GitHub Copilot Chat 模型无缝集成到 FastGPT
+- **OpenAI 兼容**: 提供标准的 OpenAI API 格式，便于集成
+- **容器化部署**: 完整的 Docker 容器化解决方案
+- **环境分离**: 支持开发、测试和生产环境
+- **健康监控**: 内置健康检查和监控功能
+- **安全配置**: 生产级别的安全配置和最佳实践
+
+## 📁 项目结构
+
+```
+fastgpt_copilot/
+├── README.md                           # 项目主文档
+├── docs/                               # 文档目录
+│   ├── deployment.md                   # 部署指南
+│   ├── configuration.md                # 配置指南
+│   └── troubleshooting.md              # 故障排除
+├── services/                           # 服务目录
+│   ├── copilot-proxy/                  # Copilot代理服务
+│   │   ├── src/server.js               # 主服务文件
+│   │   ├── package.json                # 依赖配置
+│   │   ├── Dockerfile                  # 容器配置
+│   │   └── README.md                   # 服务文档
+│   └── fastgpt/                        # FastGPT服务配置
+├── infrastructure/                     # 基础设施
+│   ├── docker/                         # Docker配置
+│   │   ├── docker-compose.yml          # 主compose文件
+│   │   ├── docker-compose.dev.yml      # 开发环境
+│   │   └── docker-compose.prod.yml     # 生产环境
+│   └── nginx/                          # Nginx配置
+│       └── nginx.conf                  # 反向代理配置
+├── scripts/                            # 部署和管理脚本
+│   ├── deploy.sh                       # 主部署脚本
+│   └── test.sh                         # 测试脚本
+├── config/                             # 配置文件
+│   ├── development.env                 # 开发环境配置
+│   └── production.env                  # 生产环境配置
+└── tests/                              # 测试目录
+```
 
 ## 🚀 快速开始
 
 ### 1. 前置要求
 
-- Docker >= 20.10
-- Docker Compose >= 2.0
+- Docker 和 Docker Compose
+- GitHub Personal Access Token (PAT)
 - 至少 4GB 可用内存
-- GitHub Copilot API 密钥
 
-### 2. 获取 GitHub Copilot API 密钥
+### 2. 环境配置
 
-1. 访问 [GitHub Settings - Developer settings](https://github.com/settings/tokens) 或 [GitHub Copilot API 管理页面](https://github.com/settings/copilot)
-2. 订阅 GitHub Copilot 服务
-3. 在设置中生成 API 密钥
-
-### 3. 配置环境变量
-
-编辑 `.env` 文件，修改以下关键配置：
+复制并修改环境配置文件：
 
 ```bash
-# 修改为您的 GitHub Copilot API 密钥
-CHAT_API_KEY=your_github_copilot_api_key_here
+# 开发环境
+cp config/development.env.example config/development.env
+# 编辑 config/development.env，设置你的 GITHUB_TOKEN
 
-# 修改 JWT 密钥 (建议使用强密码)
-TOKEN_KEY=your_jwt_secret_key_here_change_this
-ROOT_KEY=your_root_key_here_change_this
-FILE_TOKEN_SECRET=your_file_token_secret_change_this
+# 生产环境
+cp config/production.env.example config/production.env
+# 编辑 config/production.env，设置所有必要的配置
 ```
 
-### 4. 启动服务
+### 3. 部署
 
 ```bash
-# 启动所有服务
-docker-compose up -d
+# 开发环境部署
+./scripts/deploy.sh deploy
+
+# 生产环境部署
+./scripts/deploy.sh -e production deploy
+```
+
+### 4. 验证部署
+
+```bash
+# 运行测试
+./scripts/test.sh
 
 # 查看服务状态
-docker-compose ps
-
-# 查看日志
-docker-compose logs -f fastgpt
+./scripts/deploy.sh status
 ```
 
-### 5. 访问应用
+## 🔧 配置说明
 
-- FastGPT Web 界面: http://localhost:3200
-- MongoDB: localhost:27017
-- Redis: localhost:6379
-- PostgreSQL: localhost:5432
+### GitHub Token 配置
 
-## 📋 服务架构
+1. 访问 [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+2. 创建新的 PAT，需要以下权限：
+   - `repo` (如果访问私有仓库)
+   - `read:user`
+3. 将 token 设置到环境配置文件中
 
-```
-┌─────────────────┐
-│   FastGPT Web   │ :3200
-└─────────────────┘
-         │
-┌─────────────────┐
-│   FastGPT API   │
-└─────────────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼───┐ ┌──▼──┐ ┌─────────┐
-│MongoDB│ │Redis│ │PostgreSQL│
-│ :27017│ │:6379│ │  :5432   │
-└───────┘ └─────┘ └─────────┘
-```
+### FastGPT 配置
 
-## ⚙️ 配置说明
-
-### 数据库配置
-
-- **MongoDB**: 主数据库，存储用户、应用、数据集等信息
-- **Redis**: 缓存服务，提高应用性能
-- **PostgreSQL**: 向量数据库（可选），用于高级向量搜索
-
-### GitHub Copilot API 配置
-
-在 `docker-compose.yml` 中的关键环境变量：
-
-```yaml
-environment:
-  OPENAI_BASE_URL: https://api.githubcopilot.com
-  CHAT_API_KEY: your_github_copilot_api_key_here
-  DEFAULT_MODEL: gpt-4
-```
-
-### 支持的模型
-
-默认配置支持以下模型：
-
-- **GPT-4**: 最强大的模型，适合复杂任务
-- **GPT-3.5-Turbo**: 快速响应，适合日常对话
-
-## 🔧 高级配置
-
-### 自定义模型配置
-
-编辑环境变量中的 `OPENAI_MODELS` 来添加或修改模型：
+在 FastGPT 中添加新的模型配置：
 
 ```json
-[
-  {
-    "model": "gpt-4",
-    "name": "GPT-4",
-    "maxToken": 8000,
-    "price": 0.03,
-    "maxResponse": 4000,
-    "censor": false
-  }
-]
+{
+  "model": "gpt-4",
+  "name": "GitHub Copilot GPT-4",
+  "baseUrl": "http://copilot-proxy:8888",
+  "apiKey": "sk-fastgpt-copilot"
+}
 ```
 
-### 文件存储配置
+## 📖 API 文档
 
-默认使用本地存储，数据持久化到 Docker 卷：
+### 健康检查
 
-- `mongodb_data`: MongoDB 数据
-- `redis_data`: Redis 数据
-- `postgres_data`: PostgreSQL 数据
-- `fastgpt_data`: FastGPT 应用数据
+```http
+GET /health
+```
 
-## 🛠️ 常用命令
+### 列出模型
+
+```http
+GET /v1/models
+```
+
+### 聊天完成
+
+```http
+POST /v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "gpt-4",
+  "messages": [
+    {"role": "user", "content": "Hello!"}
+  ]
+}
+```
+
+## 🐳 容器化部署
+
+项目支持三种部署模式：
+
+### 开发环境
 
 ```bash
-# 重启服务
-docker-compose restart
-
-# 更新 FastGPT 镜像
-docker-compose pull fastgpt
-docker-compose up -d fastgpt
-
-# 备份数据库
-docker exec fastgpt-mongodb mongodump --uri="mongodb://root:fastgpt123@localhost:27017/fastgpt?authSource=admin" --out=/tmp/backup
-
-# 查看容器资源使用
-docker stats
-
-# 进入容器调试
-docker exec -it fastgpt-app bash
+./scripts/deploy.sh -e development deploy
 ```
 
-## 🐛 故障排除
+- 适用于本地开发和调试
+- 包含调试日志和热重载
+- 使用较少的资源配置
 
-### 1. 服务启动失败
+### 生产环境
 
 ```bash
-# 查看详细日志
-docker-compose logs fastgpt
-
-# 检查端口占用
-netstat -tlnp | grep -E '3200|27017|6379|5432'
+./scripts/deploy.sh -e production deploy
 ```
 
-### 2. 连接 GitHub Copilot API 失败
+- 优化的性能配置
+- 完整的安全设置
+- 日志轮转和备份功能
 
-- 检查 API 密钥是否正确
-- 确认网络可以访问 api.githubcopilot.com
-- 检查 GitHub Copilot 订阅状态
+## 🔍 监控和日志
 
-### 3. 数据库连接问题
+### 查看日志
 
-- 等待数据库完全启动（约 30 秒）
-- 检查数据库容器状态
-- 验证连接字符串和密码
+```bash
+# 查看所有服务日志
+./scripts/deploy.sh logs
 
-### 4. 内存不足
+# 查看特定服务日志
+docker-compose logs copilot-proxy
+```
 
-- 确保系统有至少 4GB 可用内存
-- 使用 `docker system prune` 清理无用容器
+### 健康检查
 
-## 📚 更多资源
+```bash
+# 运行健康检查
+./scripts/test.sh health
 
-- [FastGPT 官方文档](https://doc.fastgpt.in/)
-- [GitHub Copilot API 文档](https://docs.github.com/en/copilot)
-- [Docker Compose 文档](https://docs.docker.com/compose/)
+# 查看服务状态
+./scripts/deploy.sh status
+```
 
-## 🔒 安全建议
+## 🛠️ 开发指南
 
-1. **修改默认密码**: 更改所有默认密码和密钥
-2. **网络安全**: 生产环境中使用防火墙限制端口访问
-3. **HTTPS**: 配置反向代理启用 HTTPS
-4. **备份**: 定期备份数据库数据
-5. **更新**: 定期更新镜像版本
+### 本地开发
+
+1. 启动开发环境：
+```bash
+./scripts/deploy.sh -e development deploy
+```
+
+2. 修改代码后重新构建：
+```bash
+docker-compose -f infrastructure/docker/docker-compose.dev.yml up --build -d copilot-proxy
+```
+
+### 测试
+
+```bash
+# 运行所有测试
+./scripts/test.sh
+
+# 运行特定测试
+./scripts/test.sh chat
+./scripts/test.sh performance
+```
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **端口冲突**: 修改 `config/*.env` 中的端口配置
+2. **Token 无效**: 检查 GitHub PAT 是否正确设置
+3. **容器启动失败**: 检查 Docker 资源限制
+
+### 日志分析
+
+```bash
+# 查看详细错误日志
+docker-compose logs --tail=100 copilot-proxy
+
+# 查看容器状态
+docker ps -a
+```
 
 ## 📝 许可证
 
-本项目遵循 MIT 许可证。
+MIT License
+
+## 🤝 贡献
+
+欢迎提交 Issues 和 Pull Requests！
+
+## 📞 支持
+
+如有问题，请：
+
+1. 查看[故障排除文档](docs/troubleshooting.md)
+2. 搜索现有的 [Issues](https://github.com/YuanhuYang/fastgpt_copilot/issues)
+3. 创建新的 Issue

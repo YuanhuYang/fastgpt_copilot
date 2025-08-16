@@ -1,0 +1,75 @@
+version: '3.8'
+
+# FastGPT 独立部署配置
+networks:
+  fastgpt-standalone:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.32.0.0/16
+
+services:
+  # MongoDB数据库
+  mongo:
+    image: mongo:5.0.18
+    container_name: fastgpt-mongo-standalone
+    restart: unless-stopped
+    networks:
+      fastgpt-standalone:
+        ipv4_address: 172.32.0.2
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+    command: mongod --wiredTigerCacheSizeGB 2 --auth
+
+  # PostgreSQL数据库
+  pg:
+    image: ankane/pgvector:v0.5.0
+    container_name: fastgpt-pg-standalone
+    restart: unless-stopped
+    networks:
+      fastgpt-standalone:
+        ipv4_address: 172.32.0.3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${PG_USERNAME}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  # FastGPT主服务
+  fastgpt:
+    image: ghcr.io/labring/fastgpt:v4.8.1
+    container_name: fastgpt-standalone
+    restart: unless-stopped
+    networks:
+      fastgpt-standalone:
+        ipv4_address: 172.32.0.4
+    ports:
+      - "3000:3000"
+    environment:
+      - DEFAULT_ROOT_PSW=${FASTGPT_ROOT_PASSWORD}
+      - OPENAI_BASE_URL=${COPILOT_PROXY_URL:-http://localhost:8888}
+      - CHAT_API_KEY=${CHAT_API_KEY}
+      - DB_MAX_LINK=30
+      - TOKEN_KEY=${TOKEN_KEY}
+      - ROOT_KEY=${ROOT_KEY}
+      - FILE_TOKEN_KEY=${FILE_TOKEN_KEY}
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@172.32.0.2:27017/fastgpt?authSource=admin
+      - PG_URL=postgresql://${PG_USERNAME}:${PG_PASSWORD}@172.32.0.3:5432/${PG_DATABASE}
+    depends_on:
+      - mongo
+      - pg
+    volumes:
+      - fastgpt_data:/app/data
+
+volumes:
+  mongo_data:
+  pg_data:
+  fastgpt_data:

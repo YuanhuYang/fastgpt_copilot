@@ -1,0 +1,115 @@
+version: '3.8'
+
+networks:
+  fastgpt-copilot:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
+
+services:
+  # MongoDB数据库
+  mongo:
+    image: mongo:5.0.18
+    container_name: fastgpt-mongo
+    restart: always
+    networks:
+      fastgpt-copilot:
+        ipv4_address: 172.30.0.2
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=myusername
+      - MONGO_INITDB_ROOT_PASSWORD=mypassword
+    volumes:
+      - ./data/mongo:/data/db
+      - ../scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    command: mongod --wiredTigerCacheSizeGB 1 --auth
+
+  # PostgreSQL数据库 
+  pg:
+    image: ankane/pgvector:v0.5.0
+    container_name: fastgpt-pg
+    restart: always
+    networks:
+      fastgpt-copilot:
+        ipv4_address: 172.30.0.3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=username
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    volumes:
+      - ./data/pg:/var/lib/postgresql/data
+
+  # FastGPT主服务
+  fastgpt:
+    image: ghcr.io/labring/fastgpt:v4.8.1
+    container_name: fastgpt
+    restart: always
+    networks:
+      fastgpt-copilot:
+        ipv4_address: 172.30.0.4
+    ports:
+      - "3000:3000"
+    environment:
+      - DEFAULT_ROOT_PSW=1234
+      - OPENAI_BASE_URL=http://172.30.0.5:8888
+      - CHAT_API_KEY=sk-fastgpt-copilot
+      - DB_MAX_LINK=30
+      - TOKEN_KEY=any
+      - ROOT_KEY=root_key
+      - FILE_TOKEN_KEY=filetoken
+      - MONGODB_URI=mongodb://myusername:mypassword@172.30.0.2:27017/fastgpt?authSource=admin
+      - PG_URL=postgresql://username:password@172.30.0.3:5432/postgres
+    depends_on:
+      - mongo
+      - pg
+      - copilot-proxy
+
+  # GitHub Copilot代理服务
+  copilot-proxy:
+    build:
+      context: ../services/copilot-proxy
+      dockerfile: Dockerfile
+    container_name: copilot-proxy
+    restart: always
+    networks:
+      fastgpt-copilot:
+        ipv4_address: 172.30.0.5
+    ports:
+      - "8888:8888"
+    environment:
+      - PORT=8888
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - CORS_ORIGIN=*
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: fastgpt-nginx
+    restart: always
+    networks:
+      fastgpt-copilot:
+        ipv4_address: 172.30.0.6
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../infrastructure/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - fastgpt
+      - copilot-proxy
+
+volumes:
+  mongo_data:
+  pg_data:
