@@ -1,0 +1,135 @@
+{
+  "system": {
+    "title": "FastGPT",
+    "description": "基于 GitHub Copilot API 的智能对话系统",
+    "version": "1.0.0",
+    "logo": "/favicon.ico",
+    "language": "zh-CN",
+    "timezone": "Asia/Shanghai"
+  },
+  "database": {
+    "mongodb": {
+      "uri": "mongodb://root:fastgpt123@mongodb:27017/fastgpt?authSource=admin",
+      "database": "fastgpt",
+      "collections": {
+        "users": "users",
+        "teams": "teams",
+        "apps": "apps",
+        "datasets": "datasets",
+        "chats": "chats",
+        "files": "files"
+      }
+    },
+    "redis": {
+      "url": "redis://redis:6379",
+      "password": "fastgpt123",
+      "database": 0
+    },
+    "postgresql": {
+      "url": "postgresql://fastgpt:fastgpt123@postgres:5432/fastgpt",
+      "enabled": true
+    }
+  },
+  "ai": {
+    "baseUrl": "https://api.githubcopilot.com",
+    "defaultModel": "gpt-4",
+    "models": [
+      {
+        "model": "gpt-4",
+        "name": "GPT-4",
+        "maxToken": 8000,
+        "price": 0.03,
+        "maxResponse": 4000,
+        "censor": false,
+        "defaultSystemChatPrompt": "你是一个智能助手，请根据用户的问题提供准确、有用的回答。",
+        "defaultConfig": {
+          "temperature": 0.7,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0
+        }
+      },
+      {
+        "model": "gpt-3.5-turbo",
+        "name": "GPT-3.5-Turbo",
+        "maxToken": 4000,
+        "price": 0.002,
+        "maxResponse": 2000,
+        "censor": false,
+        "defaultSystemChatPrompt": "你是一个智能助手，请根据用户的问题提供准确、有用的回答。",
+        "defaultConfig": {
+          "temperature": 0.7,
+          "top_p": 1,
+          "frequency_penalty": 0,
+          "presence_penalty": 0
+        }
+      }
+    ]
+  },
+  "features": {
+    "chat": {
+      "enabled": true,
+      "maxHistoryLength": 50,
+      "maxConcurrentChats": 10
+    },
+    "datasets": {
+      "enabled": true,
+      "maxFileSize": 100,
+      "supportedTypes": [".txt", ".md", ".pdf", ".docx", ".csv", ".json"],
+      "vectorSearch": {
+        "enabled": true,
+        "similarity": 0.7,
+        "maxResults": 10
+      }
+    },
+    "fileUpload": {
+      "enabled": true,
+      "maxSize": 100,
+      "allowedTypes": ["image/jpeg", "image/png", "image/gif", "text/plain", "application/pdf"],
+      "storage": "local"
+    },
+    "plugins": {
+      "enabled": true,
+      "maxPlugins": 20
+    }
+  },
+  "security": {
+    "jwt": {
+      "expiresIn": "24h",
+      "refreshTokenExpiresIn": "7d"
+    },
+    "cors": {
+      "origin": ["http://localhost:3200", "http://127.0.0.1:3200"],
+      "credentials": true
+    },
+    "rateLimit": {
+      "enabled": true,
+      "windowMs": 900000,
+      "max": 100
+    },
+    "encryption": {
+      "algorithm": "aes-256-gcm",
+      "keyLength": 32
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "destinations": ["console", "file"],
+    "file": {
+      "path": "/app/logs",
+      "maxSize": "100MB",
+      "maxFiles": 10
+    }
+  },
+  "performance": {
+    "cache": {
+      "ttl": 3600,
+      "maxSize": 1000
+    },
+    "pagination": {
+      "defaultLimit": 20,
+      "maxLimit": 100
+    }
+  }
+}

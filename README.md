@@ -46,7 +46,7 @@ docker-compose logs -f fastgpt
 
 ### 5. 访问应用
 
-- FastGPT Web 界面: http://localhost:3000
+- FastGPT Web 界面: http://localhost:3200
 - MongoDB: localhost:27017
 - Redis: localhost:6379
 - PostgreSQL: localhost:5432
@@ -55,7 +55,7 @@ docker-compose logs -f fastgpt
 
 ```
 ┌─────────────────┐
-│   FastGPT Web   │ :3000
+│   FastGPT Web   │ :3200
 └─────────────────┘
          │
 ┌─────────────────┐
@@ -153,7 +153,7 @@ docker exec -it fastgpt-app bash
 docker-compose logs fastgpt
 
 # 检查端口占用
-netstat -tlnp | grep -E '3000|27017|6379|5432'
+netstat -tlnp | grep -E '3200|27017|6379|5432'
 ```
 
 ### 2. 连接 GitHub Copilot API 失败

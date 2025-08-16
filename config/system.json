@@ -1,0 +1,90 @@
+{
+  "appInfo": {
+    "title": "FastGPT",
+    "desc": "基于 GitHub Copilot API 的智能对话系统",
+    "version": "1.0.0",
+    "chatbotUrl": "",
+    "openAPIKey": "",
+    "limit": {
+      "exportLimitMinutes": 0
+    }
+  },
+  "chatModels": {
+    "defaultModel": "gpt-4",
+    "models": [
+      {
+        "model": "gpt-4",
+        "name": "GPT-4",
+        "maxToken": 8000,
+        "price": 0.03,
+        "maxResponse": 4000,
+        "censor": false
+      },
+      {
+        "model": "gpt-3.5-turbo",
+        "name": "GPT-3.5-Turbo",
+        "maxToken": 4000,
+        "price": 0.002,
+        "maxResponse": 2000,
+        "censor": false
+      }
+    ]
+  },
+  "vectorModels": [
+    {
+      "model": "text-embedding-ada-002",
+      "name": "OpenAI Ada v2",
+      "defaultToken": 500,
+      "maxToken": 8191,
+      "price": 0.0001
+    }
+  ],
+  "reRankModels": [],
+  "audioSpeechModels": [
+    {
+      "model": "tts-1",
+      "name": "OpenAI TTS",
+      "price": 0.015,
+      "voices": [
+        { "label": "Alloy", "value": "alloy" },
+        { "label": "Echo", "value": "echo" },
+        { "label": "Fable", "value": "fable" },
+        { "label": "Onyx", "value": "onyx" },
+        { "label": "Nova", "value": "nova" },
+        { "label": "Shimmer", "value": "shimmer" }
+      ]
+    }
+  ],
+  "whisperModel": {
+    "model": "whisper-1",
+    "name": "Whisper",
+    "price": 0.006
+  },
+  "feConfigs": {
+    "lafEnv": "",
+    "isPlus": false,
+    "favicon": "/favicon.ico",
+    "systemTitle": "FastGPT",
+    "authorText": "FastGPT Team",
+    "beianText": "",
+    "scripts": [],
+    "googleClientVerKey": "",
+    "show_userDetail": true,
+    "show_register": true,
+    "show_appStore": true,
+    "show_userChat": true,
+    "show_git": true,
+    "show_doc": true,
+    "show_pay": false,
+    "docUrl": "https://doc.fastgpt.in/",
+    "gitUrl": "https://github.com/labring/FastGPT",
+    "videoUrl": "",
+    "chatbotUrl": "",
+    "openAPIDocUrl": "https://doc.fastgpt.in/docs/development/openapi/",
+    "systemEnv": {
+      "vectorMaxProcess": 15,
+      "qaMaxProcess": 15,
+      "pgHNSWEfSearch": 100
+    }
+  }
+}

@@ -48,7 +48,7 @@ services:
     container_name: fastgpt-app
     restart: always
     ports:
-      - "3000:3000"
+      - "3200:3000"
     depends_on:
       - mongodb
       - redis

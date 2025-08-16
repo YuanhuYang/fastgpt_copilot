@@ -1,0 +1,45 @@
+{
+  "vectorModels": [
+    {
+      "model": "text-embedding-ada-002",
+      "name": "OpenAI Ada v2",
+      "defaultToken": 500,
+      "maxToken": 8191,
+      "price": 0.0001,
+      "defaultConfig": {}
+    }
+  ],
+  "reRankModels": [
+    {
+      "model": "rerank-base",
+      "name": "基础重排序模型",
+      "requestUrl": "",
+      "requestAuth": "",
+      "maxToken": 512,
+      "price": 0
+    }
+  ],
+  "audioSpeechModels": [
+    {
+      "model": "tts-1",
+      "name": "OpenAI TTS",
+      "price": 0.015,
+      "voices": [
+        { "label": "Alloy", "value": "alloy", "bufferId": "openai-Alloy" },
+        { "label": "Echo", "value": "echo", "bufferId": "openai-Echo" },
+        { "label": "Fable", "value": "fable", "bufferId": "openai-Fable" },
+        { "label": "Onyx", "value": "onyx", "bufferId": "openai-Onyx" },
+        { "label": "Nova", "value": "nova", "bufferId": "openai-Nova" },
+        { "label": "Shimmer", "value": "shimmer", "bufferId": "openai-Shimmer" }
+      ],
+      "defaultConfig": {
+        "speed": 1
+      }
+    }
+  ],
+  "whisperModel": {
+    "model": "whisper-1",
+    "name": "Whisper",
+    "price": 0.006
+  }
+}
