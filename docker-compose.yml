@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # MongoDB 数据库
+  mongodb:
+    image: mongo:5.0.18
+    container_name: fastgpt-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: fastgpt123
+      MONGO_INITDB_DATABASE: fastgpt
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    command: mongod --auth
+
+  # Redis 缓存
+  redis:
+    image: redis:7.0.11-alpine
+    container_name: fastgpt-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass fastgpt123
+    volumes:
+      - redis_data:/data
+
+  # PostgreSQL 向量数据库 (可选，用于高级向量搜索)
+  postgres:
+    image: ankane/pgvector:v0.5.0
+    container_name: fastgpt-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: fastgpt
+      POSTGRES_USER: fastgpt
+      POSTGRES_PASSWORD: fastgpt123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # FastGPT 主服务
+  fastgpt:
+    image: ghcr.io/labring/fastgpt:latest
+    container_name: fastgpt-app
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+      - redis
+    environment:
+      # 数据库连接
+      MONGODB_URI: mongodb://root:fastgpt123@mongodb:27017/fastgpt?authSource=admin
+      REDIS_URL: redis://redis:6379
+      REDIS_PASSWORD: fastgpt123
+      
+      # PostgreSQL 连接 (可选)
+      PG_URL: postgresql://fastgpt:fastgpt123@postgres:5432/fastgpt
+      
+      # 应用配置
+      PORT: 3000
+      NODE_ENV: production
+      
+      # JWT 密钥
+      TOKEN_KEY: your_jwt_secret_key_here
+      ROOT_KEY: your_root_key_here
+      
+      # 文件存储配置 (使用本地存储)
+      FILE_TOKEN_SECRET: your_file_token_secret
+      
+      # GitHub Copilot API 配置
+      OPENAI_BASE_URL: https://api.githubcopilot.com
+      CHAT_API_KEY: your_github_copilot_api_key_here
+      
+      # 模型配置
+      DEFAULT_MODEL: gpt-4
+      OPENAI_MODELS: |
+        [
+          {
+            "model": "gpt-4",
+            "name": "GPT-4",
+            "maxToken": 8000,
+            "price": 0.03,
+            "maxResponse": 4000,
+            "censor": false
+          },
+          {
+            "model": "gpt-3.5-turbo",
+            "name": "GPT-3.5-Turbo",
+            "maxToken": 4000,
+            "price": 0.002,
+            "maxResponse": 2000,
+            "censor": false
+          }
+        ]
+    volumes:
+      - fastgpt_data:/app/data
+      - ./config:/app/data/config
+    command: >
+      sh -c "
+        echo 'Waiting for dependencies...' &&
+        sleep 10 &&
+        npm run start
+      "
+
+volumes:
+  mongodb_data:
+  redis_data:
+  postgres_data:
+  fastgpt_data:
+
+networks:
+  default:
+    name: fastgpt-network
